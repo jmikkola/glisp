@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+)
 
 func main() {
-    fmt.Println("hello")
+    filename := "input.gl"
+	content, err := ioutil.ReadFile(filename)
+	if err == nil {
+        s := string(content)
+		fmt.Println(s)
+	} else {
+		fmt.Println(err)
+	}
 }

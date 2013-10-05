@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,6 +30,21 @@ type Value struct {
 
 func (val *Value) ExprType() int {
 	return TYPE_VALUE
+}
+
+func parse(input chan rune) (SExpression, error) {
+	chr, ok := <-input
+	if !ok {
+		return nil, errors.New("Unexpected end of input")
+	}
+
+	for isWhiteSpace(chr) {
+		chr, ok = <-input
+		if !ok {
+			return nil, errors.New("Unexpected end of input")
+		}
+	}
+	return nil, nil
 }
 
 func readFile() (s string, err error) {

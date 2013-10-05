@@ -85,19 +85,75 @@ func parseList(s string) (expr SExpression, rest string, err error) {
 	return out, s[1:], nil
 }
 
-func parseValue(s string) (expr SExpression, rest string, err error) {
+func escape(ch rune) rune {
+	switch ch {
+	case '"':
+		return '"'
+	case 'n':
+		return '\n'
+	case '\\':
+		return '\\'
+	}
+	return ch
+}
+
+func readQuotedString(s string) (result string, rest string, err error) {
+	outChars := []rune{'"'}
+	input := []rune(s)
+	lastCh := ' '
+	i, size := 1, len(input)
+
+	if size < 2 || input[0] != '"' {
+		return "", s, errors.New("Bad quoted string")
+	}
+
+	for ; i < size; i++ {
+		ch := input[i]
+		if lastCh == '\\' {
+			outChars = append(outChars, escape(ch))
+		} else if ch != '\\' {
+			outChars = append(outChars, ch)
+			if ch == '"' {
+				break
+			}
+		}
+		lastCh = ch
+	}
+
+	if input[i] != '"' {
+		return "", s, errors.New("Bad quoted string")
+	}
+
+	return string(outChars), string(input[i+1:]), nil
+}
+
+func readSymbol(s string) (result string, rest string, err error) {
 	i, size := 0, len(s)
-	valBytes := []byte{}
-
 	for ; i < size && s[i] != ')' && !isWhiteSpace(s[i]); i++ {
-		valBytes = append(valBytes, s[i])
+	}
+	if i < 1 {
+		return "", s, errors.New("Empty symbol")
+	}
+	return s[:i], s[i:], nil
+}
+
+func parseValue(s string) (expr SExpression, rest string, err error) {
+	var result string
+	if len(s) < 1 {
+		return nil, s, errors.New("Missing value")
 	}
 
-	if len(valBytes) < 1 {
-		return nil, s, errors.New("Value missing")
+	if s[0] == '"' {
+		result, rest, err = readQuotedString(s)
+	} else {
+		result, rest, err = readSymbol(s)
 	}
 
-	return &Value{string(valBytes)}, s[i:], nil
+	if err == nil {
+		expr = &Value{result}
+	}
+
+	return
 }
 
 func parse(s string) (expr SExpression, rest string, err error) {
@@ -133,6 +189,20 @@ func readFile() (s string, err error) {
 }
 
 func main() {
+	/*
+	   tests := []string{
+	       "a_symbol",
+	       "x y",
+	       "z)",
+	   }
+	   for _, t := range tests {
+	       e, r, _ := readSymbol(t)
+	       fmt.Println(t)
+	       fmt.Println(e)
+	       fmt.Println(r)
+	       fmt.Println("---")
+	   }
+	*/
 	s, err := readFile()
 	if err == nil {
 		expr, rest, parseErr := parse(s)

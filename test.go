@@ -3,37 +3,57 @@ package main
 import (
 	"errors"
 	"fmt"
-	"unicode/utf8"
+
+//	"unicode/utf8"
 )
 
-func asRunes(s string) ([]rune, error) {
-	runes := make([]rune, 0)
-	bytes := []byte(s)
+func escape(ch rune) rune {
+	switch ch {
+	case '"':
+		return '"'
+	case 'n':
+		return '\n'
+	case '\\':
+		return '\\'
+	}
+	return ch
+}
 
-	for i := 0; i < len(bytes); {
-		r, size := utf8.DecodeRune(bytes[i:])
-		if r == utf8.RuneError {
-			return nil, errors.New("bad rune")
-		}
+func readQuotedString(s string) (result string, rest string, err error) {
+	outChars := []rune{}
+	input := []rune(s)
+	lastCh := ' '
+	i, size := 1, len(input)
 
-		runes = append(runes, r)
-		i += size
+	if size < 2 || input[0] != '"' {
+		return "", s, errors.New("Bad quoted string")
 	}
 
-	return runes, nil
+	for ; i < size; i++ {
+		ch := input[i]
+		if lastCh == '\\' {
+			outChars = append(outChars, escape(ch))
+		} else if ch == '"' {
+			break
+		} else if ch != '\\' {
+			outChars = append(outChars, ch)
+		}
+		lastCh = ch
+	}
+
+	if input[i] != '"' {
+		return "", s, errors.New("Bad quoted string")
+	}
+
+	return string(outChars), string(input[i+1:]), nil
 }
 
 func main() {
-	s := "abc"
-	fmt.Printf("%T\n", s[0])
-	runes, err := asRunes(s)
+	result, rest, err := readQuotedString("\"a string \\n\\\"here!\" more stuff here")
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println(runes)
-		fmt.Printf("%T\n", runes)
+		fmt.Println(result)
+		fmt.Println(rest)
 	}
-
-	a := 'a'
-	fmt.Printf("%T\n", a)
 }

@@ -1,0 +1,1 @@
+(str-cat "here is a string" "this has \"\n escapes in it" "this doesn't")

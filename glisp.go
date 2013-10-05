@@ -62,7 +62,6 @@ func isWhiteSpace(b byte) bool {
 }
 
 func parseList(s string) (expr SExpression, rest string, err error) {
-	fmt.Println("parseList", string(s))
 	var out *ConsCell = nil
 	items := []SExpression{}
 
@@ -83,11 +82,10 @@ func parseList(s string) (expr SExpression, rest string, err error) {
 		out = &ConsCell{Car: items[i], Cdr: out}
 	}
 
-	return out, s, nil
+	return out, s[1:], nil
 }
 
 func parseValue(s string) (expr SExpression, rest string, err error) {
-	fmt.Println("parseValue", string(s))
 	i, size := 0, len(s)
 	valBytes := []byte{}
 
@@ -99,13 +97,10 @@ func parseValue(s string) (expr SExpression, rest string, err error) {
 		return nil, s, errors.New("Value missing")
 	}
 
-	fmt.Println("parseValue: valBytes", string(valBytes))
-	fmt.Println("parseValue: rest", string(s[i:]))
-	return &Value{string(valBytes)}, s[i+1:], nil
+	return &Value{string(valBytes)}, s[i:], nil
 }
 
 func parse(s string) (expr SExpression, rest string, err error) {
-	fmt.Println("parse", string(s))
 	i, size := 0, len(s)
 	for i < size && isWhiteSpace(s[i]) {
 		i++

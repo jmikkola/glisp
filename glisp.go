@@ -61,67 +61,67 @@ func isWhiteSpace(b byte) bool {
 	return b == ' ' || b == '\n' || b == '\t' || b == '\r'
 }
 
-func parseList(bytes []byte) (expr SExpression, rest []byte, err error) {
-	//fmt.Println("parseList", string(bytes))
+func parseList(s string) (expr SExpression, rest string, err error) {
+	fmt.Println("parseList", string(s))
 	var out *ConsCell = nil
 	items := []SExpression{}
 
-	for len(bytes) > 0 && bytes[0] != ')' {
-		item, bx, err := parse(bytes)
+	for len(s) > 0 && s[0] != ')' {
+		item, rst, err := parse(s)
 		if err != nil {
-			return nil, nil, err
+			return nil, s, err
 		}
 		items = append(items, item)
-		bytes = bx
+		s = rst
 	}
 
-	if len(bytes) < 1 {
-		return nil, nil, errors.New("Unended list")
+	if len(s) < 1 {
+		return nil, s, errors.New("Unended list")
 	}
 
 	for i := len(items) - 1; i >= 0; i-- {
 		out = &ConsCell{Car: items[i], Cdr: out}
 	}
 
-	return out, bytes, nil
+	return out, s, nil
 }
 
-func parseValue(bytes []byte) (expr SExpression, rest []byte, err error) {
-	//fmt.Println("parseValue", string(bytes))
-	i, size := 0, len(bytes)
+func parseValue(s string) (expr SExpression, rest string, err error) {
+	fmt.Println("parseValue", string(s))
+	i, size := 0, len(s)
 	valBytes := []byte{}
 
-	for ; i < size && bytes[i] != ')' && !isWhiteSpace(bytes[i]); i++ {
-		valBytes = append(valBytes, bytes[i])
+	for ; i < size && s[i] != ')' && !isWhiteSpace(s[i]); i++ {
+		valBytes = append(valBytes, s[i])
 	}
 
 	if len(valBytes) < 1 {
-		return nil, nil, errors.New("Value missing")
+		return nil, s, errors.New("Value missing")
 	}
 
-	//fmt.Println("parseValue: valBytes", string(valBytes))
-	//fmt.Println("parseValue: rest", string(bytes[i:]))
-	return &Value{string(valBytes)}, bytes[i+1:], nil
+	fmt.Println("parseValue: valBytes", string(valBytes))
+	fmt.Println("parseValue: rest", string(s[i:]))
+	return &Value{string(valBytes)}, s[i+1:], nil
 }
 
-func parse(bytes []byte) (expr SExpression, rest []byte, err error) {
-	//fmt.Println("parse", string(bytes))
-	i, size := 0, len(bytes)
-	for i < size && isWhiteSpace(bytes[i]) {
+func parse(s string) (expr SExpression, rest string, err error) {
+	fmt.Println("parse", string(s))
+	i, size := 0, len(s)
+	for i < size && isWhiteSpace(s[i]) {
 		i++
 	}
 
 	if i >= size {
-		return nil, nil, errors.New("Unexpected end of input")
+		return nil, s, errors.New("Unexpected end of input")
 	}
 
-	if bytes[i] == '(' {
-		return parseList(bytes[i+1:])
-	} else if bytes[i] == ')' {
-		return nil, nil, errors.New("Unexpected end of list")
+	if s[i] == '(' {
+		return parseList(s[i+1:])
+	} else if s[i] == ')' {
+		return nil, s, errors.New("Unexpected end of list")
 	}
 
-	return parseValue(bytes[i:])
+	return parseValue(s[i:])
 }
 
 func readFile() (s string, err error) {
@@ -140,8 +140,7 @@ func readFile() (s string, err error) {
 func main() {
 	s, err := readFile()
 	if err == nil {
-		bytes := []byte(s)
-		expr, rest, parseErr := parse(bytes)
+		expr, rest, parseErr := parse(s)
 		if parseErr != nil {
 			fmt.Println(parseErr)
 		} else {

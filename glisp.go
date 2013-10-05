@@ -3,13 +3,19 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
 func main() {
-    filename := "input.gl"
+	var filename string
+
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+	}
+
 	content, err := ioutil.ReadFile(filename)
 	if err == nil {
-        s := string(content)
+		s := string(content)
 		fmt.Println(s)
 	} else {
 		fmt.Println(err)

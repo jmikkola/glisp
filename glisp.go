@@ -62,6 +62,7 @@ func isWhiteSpace(b byte) bool {
 }
 
 func parseList(bytes []byte) (expr SExpression, rest []byte, err error) {
+	//fmt.Println("parseList", string(bytes))
 	var out *ConsCell = nil
 	items := []SExpression{}
 
@@ -86,10 +87,11 @@ func parseList(bytes []byte) (expr SExpression, rest []byte, err error) {
 }
 
 func parseValue(bytes []byte) (expr SExpression, rest []byte, err error) {
+	//fmt.Println("parseValue", string(bytes))
 	i, size := 0, len(bytes)
 	valBytes := []byte{}
 
-	for ; i < size && bytes[i] != ')'; i++ {
+	for ; i < size && bytes[i] != ')' && !isWhiteSpace(bytes[i]); i++ {
 		valBytes = append(valBytes, bytes[i])
 	}
 
@@ -97,10 +99,13 @@ func parseValue(bytes []byte) (expr SExpression, rest []byte, err error) {
 		return nil, nil, errors.New("Value missing")
 	}
 
-	return &Value{string(valBytes)}, bytes[i-1:], nil
+	//fmt.Println("parseValue: valBytes", string(valBytes))
+	//fmt.Println("parseValue: rest", string(bytes[i:]))
+	return &Value{string(valBytes)}, bytes[i+1:], nil
 }
 
 func parse(bytes []byte) (expr SExpression, rest []byte, err error) {
+	//fmt.Println("parse", string(bytes))
 	i, size := 0, len(bytes)
 	for i < size && isWhiteSpace(bytes[i]) {
 		i++
@@ -111,7 +116,7 @@ func parse(bytes []byte) (expr SExpression, rest []byte, err error) {
 	}
 
 	if bytes[i] == '(' {
-		return parseList(bytes[i:])
+		return parseList(bytes[i+1:])
 	} else if bytes[i] == ')' {
 		return nil, nil, errors.New("Unexpected end of list")
 	}
@@ -133,11 +138,18 @@ func readFile() (s string, err error) {
 }
 
 func main() {
-	var sxp SExpression
-
-	sxp = &ConsCell{Car: &Value{"+"}, Cdr: &ConsCell{}}
-	fmt.Println(sxp.ExprType(), sxp.ToString())
-
-	sxp = &Value{"val"}
-	fmt.Println(sxp.ExprType(), sxp.ToString())
+	s, err := readFile()
+	if err == nil {
+		bytes := []byte(s)
+		expr, rest, parseErr := parse(bytes)
+		if parseErr != nil {
+			fmt.Println(parseErr)
+		} else {
+			fmt.Println(expr.ToString())
+			fmt.Println("----")
+			fmt.Println(string(rest))
+		}
+	} else {
+		fmt.Println("read error")
+	}
 }

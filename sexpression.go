@@ -8,6 +8,7 @@ const (
 type SExpression interface {
 	ExprType() int
 	ToString() string
+	Evaluate() (SExpression, error)
 }
 
 type ConsCell struct {

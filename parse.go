@@ -123,5 +123,5 @@ func parse(s string) (expr SExpression, rest string, err error) {
 }
 
 func ParseSExpression(s string) (expr SExpression, rest string, err error) {
-    return parse(s)
+	return parse(s)
 }

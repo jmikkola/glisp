@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (val *Value) Evaluate() (SExpression, error) {
+func (val *Atom) Evaluate() (SExpression, error) {
 	return val, nil
 }
 
@@ -15,7 +15,7 @@ func getFunctionName(head SExpression) (string, error) {
 		return "", errors.New("null function name")
 	}
 
-	if value, ok := head.(*Value); ok {
+	if value, ok := head.(*Atom); ok {
 		return value.Val, nil
 	}
 
@@ -27,17 +27,12 @@ func asFloating(se SExpression) (float64, error) {
 		return 0, errors.New("nil is not a number")
 	}
 
-	val, isVal := se.(*Value)
+	val, isVal := se.(*Atom)
 	if !isVal {
 		return 0, errors.New("numbers must be values")
 	}
 
-	f, isFloat := strconv.ParseFloat(val.Val, 64)
-	if !isFloat {
-		return 0, errors.New("value is not a float: " + val.Val)
-	}
-
-	return f, nil
+    return strconv.ParseFloat(val.Val, 64)
 }
 
 func (cons *ConsCell) Evaluate() (SExpression, error) {
@@ -48,7 +43,7 @@ func (cons *ConsCell) Evaluate() (SExpression, error) {
 
 	builtins := map[string]func(args []SExpression) (SExpression, error){
 		"+": func(args []SExpression) (SExpression, error) {
-			sum := 0.0
+			//sum := 0.0
 
 			return nil, nil
 		},

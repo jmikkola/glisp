@@ -84,7 +84,7 @@ func readSymbol(s string) (result string, rest string, err error) {
 	return s[:i], s[i:], nil
 }
 
-func parseValue(s string) (expr SExpression, rest string, err error) {
+func parseAtom(s string) (expr SExpression, rest string, err error) {
 	var result string
 	if len(s) < 1 {
 		return nil, s, errors.New("Missing value")
@@ -97,7 +97,7 @@ func parseValue(s string) (expr SExpression, rest string, err error) {
 	}
 
 	if err == nil {
-		expr = &Value{result}
+		expr = &Atom{result}
 	}
 
 	return
@@ -119,7 +119,7 @@ func parse(s string) (expr SExpression, rest string, err error) {
 		return nil, s, errors.New("Unexpected end of list")
 	}
 
-	return parseValue(s[i:])
+	return parseAtom(s[i:])
 }
 
 func ParseSExpression(s string) (expr SExpression, rest string, err error) {

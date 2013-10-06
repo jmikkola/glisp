@@ -39,14 +39,14 @@ func (cons *ConsCell) ToString() string {
 	return s
 }
 
-type Value struct {
+type Atom struct {
 	Val string
 }
 
-func (val *Value) ExprType() int {
+func (val *Atom) ExprType() int {
 	return TYPE_VALUE
 }
 
-func (val *Value) ToString() string {
+func (val *Atom) ToString() string {
 	return val.Val
 }

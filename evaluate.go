@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 func (val *Value) Evaluate() (SExpression, error) {
@@ -21,13 +22,37 @@ func getFunctionName(head SExpression) (string, error) {
 	return "", errors.New("non-symbol as function")
 }
 
+func asFloating(se SExpression) (float64, error) {
+	if se == nil {
+		return 0, errors.New("nil is not a number")
+	}
+
+	val, isVal := se.(*Value)
+	if !isVal {
+		return 0, errors.New("numbers must be values")
+	}
+
+	f, isFloat := strconv.ParseFloat(val.Val, 64)
+	if !isFloat {
+		return 0, errors.New("value is not a float: " + val.Val)
+	}
+
+	return f, nil
+}
+
 func (cons *ConsCell) Evaluate() (SExpression, error) {
 	functionName, err := getFunctionName(cons.Car)
 	if err != nil {
 		return nil, err
 	}
 
-	builtins := map[string]func(args []SExpression) (SExpression, error){}
+	builtins := map[string]func(args []SExpression) (SExpression, error){
+		"+": func(args []SExpression) (SExpression, error) {
+			sum := 0.0
+
+			return nil, nil
+		},
+	}
 	_, ok := builtins[functionName]
 	if ok {
 		fmt.Println("found function ", functionName)

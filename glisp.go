@@ -22,13 +22,17 @@ func readFile() (s string, err error) {
 func main() {
 	s, err := readFile()
 	if err == nil {
-		expr, rest, parseErr := ParseSExpression(s)
+		expr, _, parseErr := ParseSExpression(s)
 		if parseErr != nil {
 			fmt.Println(parseErr)
 		} else {
 			fmt.Println(expr.String())
-			fmt.Println("----")
-			fmt.Println(string(rest))
+			evaled, err := Evaluate(expr)
+			if err == nil {
+				fmt.Println("=>", evaled.String())
+			} else {
+				fmt.Println("Eval error", err)
+			}
 		}
 	} else {
 		fmt.Println("read error")

@@ -27,6 +27,21 @@ func expectType(expr SExpression, glType GLType) (err error) {
 	return
 }
 
+func argList(cons *ConsCell) ([]SExpression, error) {
+	args := []SExpression{}
+
+	for c := cons; c != nil; c = c.Cdr {
+		value, err := Evaluate(c.Car)
+		if err != nil {
+			return nil, err
+		} else {
+			args = append(args, value)
+		}
+	}
+
+	return args, nil
+}
+
 func (cons *ConsCell) Evaluate() (SExpression, error) {
 	functionName, err := getFunctionName(cons.Car)
 	if err != nil {
@@ -35,20 +50,38 @@ func (cons *ConsCell) Evaluate() (SExpression, error) {
 
 	builtins := map[string]func(args []SExpression) (SExpression, error){
 		"+": func(args []SExpression) (SExpression, error) {
-			//sum := 0.0
+			// For now assume that it is all floats
+			sum := 0.0
 
-			return nil, nil
+			for i, val := range args {
+				// Also assuming that values are never nil (at least directly)
+				switch val.ExprType() {
+				case TYPE_INT:
+					sum += float64(val.(*Atom).Val.(GLInt))
+				case TYPE_FLOAT:
+					sum += float64(val.(*Atom).Val.(GLFloat))
+				default:
+					return nil, errors.New(fmt.Sprintf("The %dth argument to + is not a number", i))
+				}
+			}
+
+			return &Atom{TYPE_FLOAT, GLFloat(sum)}, nil
 		},
 	}
-	_, ok := builtins[functionName]
+
+	fn, ok := builtins[functionName]
 	if ok {
-		fmt.Println("found function ", functionName)
+		args, err := argList(cons.Cdr)
+		if err != nil {
+			return nil, err
+		}
+		return fn(args)
 	}
 
-	return nil, nil
+	return nil, errors.New("No function found called " + functionName)
 }
 
-func Evalute(sxp SExpression) (SExpression, error) {
+func Evaluate(sxp SExpression) (SExpression, error) {
 	if sxp == nil {
 		return nil, nil
 	}

@@ -1,0 +1,1 @@
+(cons (car (cdr (list 1 2 3 "asdf" zxy))) (list 4 5))

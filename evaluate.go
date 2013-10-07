@@ -118,6 +118,51 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 
 		return &Atom{TYPE_FLOAT, GLFloat(numerator)}, nil
 	},
+	"list": func(args []SExpression) (SExpression, error) {
+		var out *ConsCell = nil
+
+		for i := len(args) - 1; i >= 0; i-- {
+			out = &ConsCell{args[i], out}
+		}
+
+		return out, nil
+	},
+	"car": func(args []SExpression) (SExpression, error) {
+		if len(args) != 1 {
+			return nil, errors.New("car expects one argument")
+		}
+
+		cons, ok := args[0].(*ConsCell)
+		if !ok {
+			return nil, errors.New("car requires first argument to be a cons cell")
+		}
+
+		return cons.Car, nil
+	},
+	"cdr": func(args []SExpression) (SExpression, error) {
+		if len(args) != 1 {
+			return nil, errors.New("cdr expects one argument")
+		}
+
+		cons, ok := args[0].(*ConsCell)
+		if !ok {
+			return nil, errors.New("cdr requires first argument to be a cons cell")
+		}
+
+		return cons.Cdr, nil
+	},
+	"cons": func(args []SExpression) (SExpression, error) {
+		if len(args) != 2 {
+			return nil, errors.New("cons expects 2 arguments")
+		}
+
+		cons, ok := args[1].(*ConsCell)
+		if !ok {
+			return nil, errors.New("cons requires second argument to be a cons cell")
+		}
+
+		return &ConsCell{args[0], cons}, nil
+	},
 }
 
 func (cons *ConsCell) Evaluate() (SExpression, error) {

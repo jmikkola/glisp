@@ -2,8 +2,12 @@ package main
 
 import (
 	"errors"
-	"fmt"
+	"regexp"
+	"strconv"
 )
+
+var intRe *regexp.Regexp = regexp.MustCompile("^-?\\d+$")
+var floatRe *regexp.Regexp = regexp.MustCompile("^-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$")
 
 func isWhiteSpace(b byte) bool {
 	return b == ' ' || b == '\n' || b == '\t' || b == '\r'
@@ -45,7 +49,7 @@ func escape(ch rune) rune {
 	return ch
 }
 
-func readQuotedString(s string) (result fmt.Stringer, rest string, err error) {
+func readQuotedString(s string) (result SExpression, rest string, err error) {
 	outChars := []rune{'"'}
 	input := []rune(s)
 	lastCh := ' '
@@ -72,34 +76,48 @@ func readQuotedString(s string) (result fmt.Stringer, rest string, err error) {
 		return nil, s, errors.New("Bad quoted string")
 	}
 
-	return GLString(string(outChars)), string(input[i+1:]), nil
+	value := GLString(string(outChars))
+	return &Atom{TYPE_STRING, value}, string(input[i+1:]), nil
 }
 
-func readSymbol(s string) (result fmt.Stringer, rest string, err error) {
+func readWord(s string) (word string, rest string, err error) {
 	i, size := 0, len(s)
 	for ; i < size && s[i] != ')' && !isWhiteSpace(s[i]); i++ {
 	}
 	if i < 1 {
-		return nil, s, errors.New("Empty symbol")
+		return "", s, errors.New("Expected to read word")
 	}
-	return GLSymbol(s[:i]), s[i:], nil
+	return s[:i], s[i:], nil
 }
 
 func parseAtom(s string) (expr SExpression, rest string, err error) {
-	var result fmt.Stringer
-
 	if len(s) < 1 {
-		return nil, s, errors.New("Missing value")
+		err = errors.New("Missing value")
+		return
 	}
 
 	if s[0] == '"' {
-		result, rest, err = readQuotedString(s)
-	} else {
-		result, rest, err = readSymbol(s)
+		return readQuotedString(s)
 	}
 
-	if err == nil {
-		expr = &Atom{TYPE_STRING, result}
+	word, rest, err := readWord(s)
+	if err != nil {
+		return
+	}
+	wordBytes := []byte(word)
+
+	if intRe.Match(wordBytes) {
+		intVal, err := strconv.ParseInt(word, 10, 64)
+		if err == nil {
+			return &Atom{TYPE_INT, GLInt(intVal)}, rest, nil
+		}
+	} else if floatRe.Match(wordBytes) {
+		floatVal, err := strconv.ParseFloat(word, 64)
+		if err == nil {
+			return &Atom{TYPE_FLOAT, GLFloat(floatVal)}, rest, nil
+		}
+	} else {
+		return &Atom{TYPE_SYMBOL, GLSymbol(word)}, rest, nil
 	}
 
 	return

@@ -50,7 +50,7 @@ func escape(ch rune) rune {
 }
 
 func readQuotedString(s string) (result SExpression, rest string, err error) {
-	outChars := []rune{'"'}
+	outChars := []rune{}
 	input := []rune(s)
 	lastCh := ' '
 	i, size := 1, len(input)
@@ -63,11 +63,10 @@ func readQuotedString(s string) (result SExpression, rest string, err error) {
 		ch := input[i]
 		if lastCh == '\\' {
 			outChars = append(outChars, escape(ch))
+		} else if ch == '"' {
+			break
 		} else if ch != '\\' {
 			outChars = append(outChars, ch)
-			if ch == '"' {
-				break
-			}
 		}
 		lastCh = ch
 	}

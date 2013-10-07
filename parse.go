@@ -90,6 +90,7 @@ func readWord(s string) (word string, rest string, err error) {
 }
 
 func parseAtom(s string) (expr SExpression, rest string, err error) {
+	rest = s
 	if len(s) < 1 {
 		err = errors.New("Missing value")
 		return
@@ -108,15 +109,15 @@ func parseAtom(s string) (expr SExpression, rest string, err error) {
 	if intRe.Match(wordBytes) {
 		intVal, err := strconv.ParseInt(word, 10, 64)
 		if err == nil {
-			return &Atom{TYPE_INT, GLInt(intVal)}, rest, nil
+			expr = &Atom{TYPE_INT, GLInt(intVal)}
 		}
 	} else if floatRe.Match(wordBytes) {
 		floatVal, err := strconv.ParseFloat(word, 64)
 		if err == nil {
-			return &Atom{TYPE_FLOAT, GLFloat(floatVal)}, rest, nil
+			expr = &Atom{TYPE_FLOAT, GLFloat(floatVal)}
 		}
 	} else {
-		return &Atom{TYPE_SYMBOL, GLSymbol(word)}, rest, nil
+		expr = &Atom{TYPE_SYMBOL, GLSymbol(word)}
 	}
 
 	return

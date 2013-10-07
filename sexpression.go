@@ -67,7 +67,7 @@ func (atom *Atom) ToString() string {
 type GLSymbol string
 type GLString string
 type GLFloat float64
-type GLInt int
+type GLInt int64
 
 func (sym GLSymbol) String() string {
 	return string(sym)
@@ -78,9 +78,9 @@ func (str GLString) String() string {
 }
 
 func (gflt GLFloat) String() string {
-	return strconv.FormatFloat(float64(gflt), 'b', -1, 64)
+	return strconv.FormatFloat(float64(gflt), 'g', -1, 64)
 }
 
 func (gint GLInt) String() string {
-	return string(gint)
+	return strconv.FormatInt(int64(gint), 10)
 }

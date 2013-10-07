@@ -42,31 +42,88 @@ func argList(cons *ConsCell) ([]SExpression, error) {
 	return args, nil
 }
 
+func floatArgs(args []SExpression) ([]float64, error) {
+	floatArgs := []float64{}
+
+	for i, value := range args {
+		switch value.ExprType() {
+		case TYPE_INT:
+			floatArgs = append(floatArgs, float64(value.(*Atom).Val.(GLInt)))
+		case TYPE_FLOAT:
+			floatArgs = append(floatArgs, float64(value.(*Atom).Val.(GLFloat)))
+		default:
+			return nil, errors.New(fmt.Sprintf("The %dth argument is not a number", i+1))
+		}
+	}
+
+	return floatArgs, nil
+}
+
+var builtins map[string]func(args []SExpression) (SExpression, error) = map[string]func(args []SExpression) (SExpression, error){
+	"+": func(args []SExpression) (SExpression, error) {
+		floats, err := floatArgs(args)
+		if err != nil {
+			return nil, err
+		}
+
+		sum := 0.0
+		for _, val := range floats {
+			sum += val
+		}
+
+		return &Atom{TYPE_FLOAT, GLFloat(sum)}, nil
+	},
+	"-": func(args []SExpression) (SExpression, error) {
+		floats, err := floatArgs(args)
+		if err != nil {
+			return nil, err
+		}
+		if len(floats) < 2 {
+			return nil, errors.New("Cannot subtract with fewer than two numbers")
+		}
+
+		sum := floats[0]
+		for _, val := range floats[1:] {
+			sum -= val
+		}
+
+		return &Atom{TYPE_FLOAT, GLFloat(sum)}, nil
+	},
+	"*": func(args []SExpression) (SExpression, error) {
+		floats, err := floatArgs(args)
+		if err != nil {
+			return nil, err
+		}
+
+		product := 1.0
+		for _, val := range floats {
+			product *= val
+		}
+
+		return &Atom{TYPE_FLOAT, GLFloat(product)}, nil
+	},
+	"/": func(args []SExpression) (SExpression, error) {
+		floats, err := floatArgs(args)
+		if err != nil {
+			return nil, err
+		}
+		if len(floats) < 2 {
+			return nil, errors.New("Cannot divide with fewer than two numbers")
+		}
+
+		numerator := floats[0]
+		for _, val := range floats[1:] {
+			numerator /= val
+		}
+
+		return &Atom{TYPE_FLOAT, GLFloat(numerator)}, nil
+	},
+}
+
 func (cons *ConsCell) Evaluate() (SExpression, error) {
 	functionName, err := getFunctionName(cons.Car)
 	if err != nil {
 		return nil, err
-	}
-
-	builtins := map[string]func(args []SExpression) (SExpression, error){
-		"+": func(args []SExpression) (SExpression, error) {
-			// For now assume that it is all floats
-			sum := 0.0
-
-			for i, val := range args {
-				// Also assuming that values are never nil (at least directly)
-				switch val.ExprType() {
-				case TYPE_INT:
-					sum += float64(val.(*Atom).Val.(GLInt))
-				case TYPE_FLOAT:
-					sum += float64(val.(*Atom).Val.(GLFloat))
-				default:
-					return nil, errors.New(fmt.Sprintf("The %dth argument to + is not a number", i))
-				}
-			}
-
-			return &Atom{TYPE_FLOAT, GLFloat(sum)}, nil
-		},
 	}
 
 	fn, ok := builtins[functionName]

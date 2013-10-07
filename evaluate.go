@@ -20,6 +20,13 @@ func getFunctionName(head SExpression) (string, error) {
 	return atom.Val.String(), nil
 }
 
+func expectType(expr SExpression, glType GLType) (err error) {
+	if expr == nil || expr.ExprType() != glType {
+		err = errors.New("Wrong type")
+	}
+	return
+}
+
 func (cons *ConsCell) Evaluate() (SExpression, error) {
 	functionName, err := getFunctionName(cons.Car)
 	if err != nil {

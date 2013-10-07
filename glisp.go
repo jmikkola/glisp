@@ -26,7 +26,7 @@ func main() {
 		if parseErr != nil {
 			fmt.Println(parseErr)
 		} else {
-			fmt.Println(expr.ToString())
+			fmt.Println(expr.String())
 			fmt.Println("----")
 			fmt.Println(string(rest))
 		}

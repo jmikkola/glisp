@@ -15,10 +15,25 @@ const (
 	TYPE_SYMBOL
 )
 
+var TypeNames map[GLType]string = map[GLType]string{
+	TYPE_CONS:   "cons",
+	TYPE_INT:    "int",
+	TYPE_FLOAT:  "float",
+	TYPE_STRING: "string",
+	TYPE_SYMBOL: "symbol",
+}
+
 type SExpression interface {
 	ExprType() GLType
-	ToString() string
+	String() string
 	Evaluate() (SExpression, error)
+}
+
+func GetTypeName(se SExpression) string {
+	if se == nil {
+		return "nil"
+	}
+	return TypeNames[se.ExprType()]
 }
 
 type ConsCell struct {
@@ -30,12 +45,12 @@ func (cons *ConsCell) ExprType() GLType {
 	return TYPE_CONS
 }
 
-func (cons *ConsCell) ToString() string {
+func (cons *ConsCell) String() string {
 	s := "("
 
 	for ; cons != nil; cons = cons.Cdr {
 		if cons.Car != nil {
-			s += cons.Car.ToString()
+			s += cons.Car.String()
 		} else {
 			s += "nil"
 		}
@@ -58,7 +73,7 @@ func (val *Atom) ExprType() GLType {
 	return val.Type
 }
 
-func (atom *Atom) ToString() string {
+func (atom *Atom) String() string {
 	return atom.Val.String()
 }
 

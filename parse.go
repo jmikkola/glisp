@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 )
 
 func isWhiteSpace(b byte) bool {
@@ -44,14 +45,14 @@ func escape(ch rune) rune {
 	return ch
 }
 
-func readQuotedString(s string) (result string, rest string, err error) {
+func readQuotedString(s string) (result fmt.Stringer, rest string, err error) {
 	outChars := []rune{'"'}
 	input := []rune(s)
 	lastCh := ' '
 	i, size := 1, len(input)
 
 	if size < 2 || input[0] != '"' {
-		return "", s, errors.New("Bad quoted string")
+		return nil, s, errors.New("Bad quoted string")
 	}
 
 	for ; i < size; i++ {
@@ -68,24 +69,25 @@ func readQuotedString(s string) (result string, rest string, err error) {
 	}
 
 	if input[i] != '"' {
-		return "", s, errors.New("Bad quoted string")
+		return nil, s, errors.New("Bad quoted string")
 	}
 
-	return string(outChars), string(input[i+1:]), nil
+	return GLString(string(outChars)), string(input[i+1:]), nil
 }
 
-func readSymbol(s string) (result string, rest string, err error) {
+func readSymbol(s string) (result fmt.Stringer, rest string, err error) {
 	i, size := 0, len(s)
 	for ; i < size && s[i] != ')' && !isWhiteSpace(s[i]); i++ {
 	}
 	if i < 1 {
-		return "", s, errors.New("Empty symbol")
+		return nil, s, errors.New("Empty symbol")
 	}
-	return s[:i], s[i:], nil
+	return GLSymbol(s[:i]), s[i:], nil
 }
 
 func parseAtom(s string) (expr SExpression, rest string, err error) {
-	var result string
+	var result fmt.Stringer
+
 	if len(s) < 1 {
 		return nil, s, errors.New("Missing value")
 	}
@@ -97,7 +99,7 @@ func parseAtom(s string) (expr SExpression, rest string, err error) {
 	}
 
 	if err == nil {
-		expr = &Atom{result}
+		expr = &Atom{TYPE_STRING, result}
 	}
 
 	return

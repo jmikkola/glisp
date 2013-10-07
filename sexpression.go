@@ -1,12 +1,22 @@
 package main
 
+import (
+	"fmt"
+	"strconv"
+)
+
+type GLType int
+
 const (
-	TYPE_CONS = iota
-	TYPE_VALUE
+	TYPE_CONS GLType = iota
+	TYPE_INT
+	TYPE_FLOAT
+	TYPE_STRING
+	TYPE_SYMBOL
 )
 
 type SExpression interface {
-	ExprType() int
+	ExprType() GLType
 	ToString() string
 	Evaluate() (SExpression, error)
 }
@@ -16,7 +26,7 @@ type ConsCell struct {
 	Cdr *ConsCell
 }
 
-func (cons *ConsCell) ExprType() int {
+func (cons *ConsCell) ExprType() GLType {
 	return TYPE_CONS
 }
 
@@ -40,13 +50,37 @@ func (cons *ConsCell) ToString() string {
 }
 
 type Atom struct {
-	Val string
+	Type GLType
+	Val  fmt.Stringer
 }
 
-func (val *Atom) ExprType() int {
-	return TYPE_VALUE
+func (val *Atom) ExprType() GLType {
+	return val.Type
 }
 
-func (val *Atom) ToString() string {
-	return val.Val
+func (atom *Atom) ToString() string {
+	return atom.Val.String()
+}
+
+// Types for the values of an Atom:
+
+type GLSymbol string
+type GLString string
+type GLFloat float64
+type GLInt int
+
+func (sym GLSymbol) String() string {
+	return string(sym)
+}
+
+func (str GLString) String() string {
+	return "\"" + string(str) + "\""
+}
+
+func (gflt GLFloat) String() string {
+	return strconv.FormatFloat(float64(gflt), 'b', -1, 64)
+}
+
+func (gint GLInt) String() string {
+	return string(gint)
 }

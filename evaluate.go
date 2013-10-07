@@ -3,7 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strconv"
+
+//	"strconv"
 )
 
 func (val *Atom) Evaluate() (SExpression, error) {
@@ -11,28 +12,12 @@ func (val *Atom) Evaluate() (SExpression, error) {
 }
 
 func getFunctionName(head SExpression) (string, error) {
-	if head == nil {
-		return "", errors.New("null function name")
+	if head == nil || head.ExprType() != TYPE_SYMBOL {
+		return "", errors.New("non-symbol as function name")
 	}
 
-	if value, ok := head.(*Atom); ok {
-		return value.Val, nil
-	}
-
-	return "", errors.New("non-symbol as function")
-}
-
-func asFloating(se SExpression) (float64, error) {
-	if se == nil {
-		return 0, errors.New("nil is not a number")
-	}
-
-	val, isVal := se.(*Atom)
-	if !isVal {
-		return 0, errors.New("numbers must be values")
-	}
-
-    return strconv.ParseFloat(val.Val, 64)
+	atom, _ := head.(*Atom)
+	return atom.Val.String(), nil
 }
 
 func (cons *ConsCell) Evaluate() (SExpression, error) {

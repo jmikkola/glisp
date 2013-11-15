@@ -2,6 +2,7 @@ package main
 
 import (
 	//	"fmt"
+	"errors"
 	"strconv"
 )
 
@@ -25,14 +26,21 @@ var TypeNames map[GLType]string = map[GLType]string{
 	TYPE_NIL:    "nil",
 }
 
+func GetTypeName(se SExpression) string {
+	return TypeNames[se.ExprType()]
+}
+
+type Typer interface {
+	AsFloat() (float64, error)
+	AsInt() (int64, error)
+	AsString() (string, error)
+}
+
 type SExpression interface {
+	Typer
 	ExprType() GLType
 	String() string
 	Evaluate() (SExpression, error)
-}
-
-func GetTypeName(se SExpression) string {
-	return TypeNames[se.ExprType()]
 }
 
 // Provides "standard implementations" so that the types below always implement SExpression
@@ -48,6 +56,18 @@ func (b *BaseSExpression) String() string {
 
 func (b *BaseSExpression) Evaluate() (SExpression, error) {
 	return b, nil
+}
+
+func (a *BaseSExpression) AsFloat() (float64, error) {
+	return 0.0, errors.New("Cannot convert to float: " + GetTypeName(a))
+}
+
+func (a *BaseSExpression) AsInt() (int64, error) {
+	return 0, errors.New("Cannot convert to int: " + GetTypeName(a))
+}
+
+func (a *BaseSExpression) AsString() (string, error) {
+	return "", errors.New("Cannot convert to string: " + GetTypeName(a))
 }
 
 // The element that makes up lists
@@ -80,15 +100,10 @@ func (cons *ConsCell) String() string {
 	return s
 }
 
-// Atom will be used for default implementation of function to cast to specific types
-type Atom struct {
-	BaseSExpression
-}
-
 // Symbol
 type Symbol struct {
 	Val string
-	Atom
+	BaseSExpression
 }
 
 func (_ *Symbol) ExprType() GLType {
@@ -102,7 +117,7 @@ func (s *Symbol) String() string {
 // String
 type String struct {
 	Val string
-	Atom
+	BaseSExpression
 }
 
 func (_ *String) ExprType() GLType {
@@ -113,10 +128,14 @@ func (s *String) String() string {
 	return `"` + string(s.Val) + `"`
 }
 
+func (s *String) AsString() (string, error) {
+	return s.Val, nil
+}
+
 // Float
 type Float struct {
 	Val float64
-	Atom
+	BaseSExpression
 }
 
 func (_ *Float) ExprType() GLType {
@@ -125,6 +144,14 @@ func (_ *Float) ExprType() GLType {
 
 func (f *Float) String() string {
 	return strconv.FormatFloat(f.Val, 'g', -1, 64)
+}
+
+func (f *Float) AsFloat() (float64, error) {
+	return f.Val, nil
+}
+
+func (f *Float) AsInt() (int64, error) {
+	return int64(f.Val), nil
 }
 
 // Int
@@ -139,4 +166,12 @@ func (_ *Int) ExprType() GLType {
 
 func (i *Int) String() string {
 	return strconv.FormatInt(i.Val, 10)
+}
+
+func (i *Int) AsInt() (int64, error) {
+	return i.Val, nil
+}
+
+func (i *Int) AsFloat() (float64, error) {
+	return float64(i.Val), nil
 }

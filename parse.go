@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"github.com/jmikkola/glisp/sexpression"
 	"regexp"
 	"strconv"
-	"github.com/jmikkola/glisp/sexpression"
 )
 
 var intRe *regexp.Regexp = regexp.MustCompile("^-?\\d+$")

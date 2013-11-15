@@ -59,7 +59,7 @@ func floatFunc(args []sexpression.SExpression, minArgs int, fname string, fn fun
 	return &sexpression.Float{Val: fn(floatArgs)}, nil
 }
 
-var builtins map[string]func(args []sexpression.SExpression) (sexpression.SExpression, error) = map[string]func(args []sexpression.SExpression) (sexpression.SExpression, error){
+var builtins = map[string]func(args []sexpression.SExpression) (sexpression.SExpression, error){
 	"+": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		return floatFunc(args, 1, "+", func(args []float64) (sum float64) {
 			for _, val := range args {

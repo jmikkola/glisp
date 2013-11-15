@@ -16,8 +16,12 @@ func getFunctionName(head SExpression) (string, error) {
 		return "", errors.New("non-symbol as function name")
 	}
 
-	atom, _ := head.(*Atom)
-	return atom.Val.String(), nil
+	atom, ok := head.(*Symbol)
+	if !ok {
+		return "", errors.New("non-symbol as function name")
+	}
+
+	return atom.String(), nil
 }
 
 func expectType(expr SExpression, glType GLType) (err error) {
@@ -60,7 +64,7 @@ func floatFunc(args []SExpression, minArgs int, fname string, fn func(args []flo
 		return nil, errors.New(fmt.Sprintf("%s requires at least %d args, %d given", fname, minArgs, len(floatArgs)))
 	}
 
-	return &Atom{TYPE_FLOAT, GLFloat(fn(floatArgs))}, nil
+	return &Float{Val: fn(floatArgs)}, nil
 }
 
 var builtins map[string]func(args []SExpression) (SExpression, error) = map[string]func(args []SExpression) (SExpression, error){
@@ -103,7 +107,7 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 		var out *ConsCell = nil
 
 		for i := len(args) - 1; i >= 0; i-- {
-			out = &ConsCell{args[i], out}
+			out = &ConsCell{Car: args[i], Cdr: out}
 		}
 
 		return out, nil
@@ -142,7 +146,7 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 			return nil, errors.New("cons requires second argument to be a cons cell")
 		}
 
-		return &ConsCell{args[0], cons}, nil
+		return &ConsCell{Car: args[0], Cdr: cons}, nil
 	},
 }
 

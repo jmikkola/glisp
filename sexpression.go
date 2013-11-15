@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//	"fmt"
 	"strconv"
 )
 
@@ -13,6 +13,7 @@ const (
 	TYPE_FLOAT
 	TYPE_STRING
 	TYPE_SYMBOL
+	TYPE_NIL
 )
 
 var TypeNames map[GLType]string = map[GLType]string{
@@ -21,6 +22,7 @@ var TypeNames map[GLType]string = map[GLType]string{
 	TYPE_FLOAT:  "float",
 	TYPE_STRING: "string",
 	TYPE_SYMBOL: "symbol",
+	TYPE_NIL:    "nil",
 }
 
 type SExpression interface {
@@ -30,15 +32,29 @@ type SExpression interface {
 }
 
 func GetTypeName(se SExpression) string {
-	if se == nil {
-		return "nil"
-	}
 	return TypeNames[se.ExprType()]
 }
 
+// Provides "standard implementations" so that the types below always implement SExpression
+type BaseSExpression struct{}
+
+func (b *BaseSExpression) ExprType() GLType {
+	panic("Not implemented")
+}
+
+func (b *BaseSExpression) String() string {
+	panic("Not implemented")
+}
+
+func (b *BaseSExpression) Evaluate() (SExpression, error) {
+	return b, nil
+}
+
+// The element that makes up lists
 type ConsCell struct {
 	Car SExpression
 	Cdr *ConsCell
+	BaseSExpression
 }
 
 func (cons *ConsCell) ExprType() GLType {
@@ -64,38 +80,63 @@ func (cons *ConsCell) String() string {
 	return s
 }
 
+// Atom will be used for default implementation of function to cast to specific types
 type Atom struct {
-	Type GLType
-	Val  fmt.Stringer
+	BaseSExpression
 }
 
-func (val *Atom) ExprType() GLType {
-	return val.Type
+// Symbol
+type Symbol struct {
+	Val string
+	Atom
 }
 
-func (atom *Atom) String() string {
-	return atom.Val.String()
+func (_ *Symbol) ExprType() GLType {
+	return TYPE_SYMBOL
 }
 
-// Types for the values of an Atom:
-
-type GLSymbol string
-type GLString string
-type GLFloat float64
-type GLInt int64
-
-func (sym GLSymbol) String() string {
-	return string(sym)
+func (s *Symbol) String() string {
+	return s.Val
 }
 
-func (str GLString) String() string {
-	return "\"" + string(str) + "\""
+// String
+type String struct {
+	Val string
+	Atom
 }
 
-func (gflt GLFloat) String() string {
-	return strconv.FormatFloat(float64(gflt), 'g', -1, 64)
+func (_ *String) ExprType() GLType {
+	return TYPE_STRING
 }
 
-func (gint GLInt) String() string {
-	return strconv.FormatInt(int64(gint), 10)
+func (s *String) String() string {
+	return `"` + string(s.Val) + `"`
+}
+
+// Float
+type Float struct {
+	Val float64
+	Atom
+}
+
+func (_ *Float) ExprType() GLType {
+	return TYPE_FLOAT
+}
+
+func (f *Float) String() string {
+	return strconv.FormatFloat(f.Val, 'g', -1, 64)
+}
+
+// Int
+type Int struct {
+	Val int64
+	BaseSExpression
+}
+
+func (_ *Int) ExprType() GLType {
+	return TYPE_INT
+}
+
+func (i *Int) String() string {
+	return strconv.FormatInt(i.Val, 10)
 }

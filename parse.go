@@ -75,8 +75,7 @@ func readQuotedString(s string) (result SExpression, rest string, err error) {
 		return nil, s, errors.New("Bad quoted string")
 	}
 
-	value := GLString(string(outChars))
-	return &Atom{TYPE_STRING, value}, string(input[i+1:]), nil
+	return &String{Val: string(outChars)}, string(input[i+1:]), nil
 }
 
 func readWord(s string) (word string, rest string, err error) {
@@ -109,15 +108,15 @@ func parseAtom(s string) (expr SExpression, rest string, err error) {
 	if intRe.Match(wordBytes) {
 		intVal, err := strconv.ParseInt(word, 10, 64)
 		if err == nil {
-			expr = &Atom{TYPE_INT, GLInt(intVal)}
+			expr = &Int{Val: intVal}
 		}
 	} else if floatRe.Match(wordBytes) {
 		floatVal, err := strconv.ParseFloat(word, 64)
 		if err == nil {
-			expr = &Atom{TYPE_FLOAT, GLFloat(floatVal)}
+			expr = &Float{Val: floatVal}
 		}
 	} else {
-		expr = &Atom{TYPE_SYMBOL, GLSymbol(word)}
+		expr = &Symbol{Val: word}
 	}
 
 	return

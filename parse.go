@@ -4,6 +4,7 @@ import (
 	"errors"
 	"regexp"
 	"strconv"
+	"github.com/jmikkola/glisp/sexpression"
 )
 
 var intRe *regexp.Regexp = regexp.MustCompile("^-?\\d+$")
@@ -13,9 +14,9 @@ func isWhiteSpace(b byte) bool {
 	return b == ' ' || b == '\n' || b == '\t' || b == '\r'
 }
 
-func parseList(s string) (expr SExpression, rest string, err error) {
-	var out *ConsCell = nil
-	items := []SExpression{}
+func parseList(s string) (expr sexpression.SExpression, rest string, err error) {
+	var out *sexpression.ConsCell = nil
+	items := []sexpression.SExpression{}
 
 	for len(s) > 0 && s[0] != ')' {
 		item, rst, err := parse(s)
@@ -31,7 +32,7 @@ func parseList(s string) (expr SExpression, rest string, err error) {
 	}
 
 	for i := len(items) - 1; i >= 0; i-- {
-		out = &ConsCell{Car: items[i], Cdr: out}
+		out = &sexpression.ConsCell{Car: items[i], Cdr: out}
 	}
 
 	return out, s[1:], nil
@@ -49,7 +50,7 @@ func escape(ch rune) rune {
 	return ch
 }
 
-func readQuotedString(s string) (result SExpression, rest string, err error) {
+func readQuotedString(s string) (result sexpression.SExpression, rest string, err error) {
 	outChars := []rune{}
 	input := []rune(s)
 	lastCh := ' '
@@ -75,7 +76,7 @@ func readQuotedString(s string) (result SExpression, rest string, err error) {
 		return nil, s, errors.New("Bad quoted string")
 	}
 
-	return &String{Val: string(outChars)}, string(input[i+1:]), nil
+	return &sexpression.String{Val: string(outChars)}, string(input[i+1:]), nil
 }
 
 func readWord(s string) (word string, rest string, err error) {
@@ -88,7 +89,7 @@ func readWord(s string) (word string, rest string, err error) {
 	return s[:i], s[i:], nil
 }
 
-func parseAtom(s string) (expr SExpression, rest string, err error) {
+func parseAtom(s string) (expr sexpression.SExpression, rest string, err error) {
 	rest = s
 	if len(s) < 1 {
 		err = errors.New("Missing value")
@@ -108,21 +109,21 @@ func parseAtom(s string) (expr SExpression, rest string, err error) {
 	if intRe.Match(wordBytes) {
 		intVal, err := strconv.ParseInt(word, 10, 64)
 		if err == nil {
-			expr = &Int{Val: intVal}
+			expr = &sexpression.Int{Val: intVal}
 		}
 	} else if floatRe.Match(wordBytes) {
 		floatVal, err := strconv.ParseFloat(word, 64)
 		if err == nil {
-			expr = &Float{Val: floatVal}
+			expr = &sexpression.Float{Val: floatVal}
 		}
 	} else {
-		expr = &Symbol{Val: word}
+		expr = &sexpression.Symbol{Val: word}
 	}
 
 	return
 }
 
-func parse(s string) (expr SExpression, rest string, err error) {
+func parse(s string) (expr sexpression.SExpression, rest string, err error) {
 	i, size := 0, len(s)
 	for i < size && isWhiteSpace(s[i]) {
 		i++
@@ -141,6 +142,6 @@ func parse(s string) (expr SExpression, rest string, err error) {
 	return parseAtom(s[i:])
 }
 
-func ParseSExpression(s string) (expr SExpression, rest string, err error) {
+func ParseSExpression(s string) (expr sexpression.SExpression, rest string, err error) {
 	return parse(s)
 }

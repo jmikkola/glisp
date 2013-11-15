@@ -3,11 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-
-//	"strconv"
+	"github.com/jmikkola/glisp/sexpression"
 )
 
-func getFunctionName(head SExpression) (string, error) {
+func getFunctionName(head sexpression.SExpression) (string, error) {
 	if head == nil || head.ExprType() != TYPE_SYMBOL {
 		return "", errors.New("non-symbol as function name")
 	}
@@ -20,15 +19,15 @@ func getFunctionName(head SExpression) (string, error) {
 	return atom.String(), nil
 }
 
-func expectType(expr SExpression, glType GLType) (err error) {
+func expectType(expr sexpression.SExpression, glType GLType) (err error) {
 	if expr == nil || expr.ExprType() != glType {
 		err = errors.New("Wrong type")
 	}
 	return
 }
 
-func argList(cons *ConsCell) ([]SExpression, error) {
-	args := []SExpression{}
+func argList(cons *sexpression.ConsCell) ([]sexpression.SExpression, error) {
+	args := []sexpression.SExpression{}
 
 	for c := cons; c != nil; c = c.Cdr {
 		value, err := Evaluate(c.Car)
@@ -42,7 +41,7 @@ func argList(cons *ConsCell) ([]SExpression, error) {
 	return args, nil
 }
 
-func floatFunc(args []SExpression, minArgs int, fname string, fn func(args []float64) float64) (SExpression, error) {
+func floatFunc(args []sexpression.SExpression, minArgs int, fname string, fn func(args []float64) float64) (sexpression.SExpression, error) {
 	floatArgs := []float64{}
 
 	for _, value := range args {
@@ -57,11 +56,11 @@ func floatFunc(args []SExpression, minArgs int, fname string, fn func(args []flo
 		return nil, errors.New(fmt.Sprintf("%s requires at least %d args, %d given", fname, minArgs, len(floatArgs)))
 	}
 
-	return &Float{Val: fn(floatArgs)}, nil
+	return &sexpression.Float{Val: fn(floatArgs)}, nil
 }
 
-var builtins map[string]func(args []SExpression) (SExpression, error) = map[string]func(args []SExpression) (SExpression, error){
-	"+": func(args []SExpression) (SExpression, error) {
+var builtins map[string]func(args []sexpression.SExpression) (sexpression.SExpression, error) = map[string]func(args []sexpression.SExpression) (sexpression.SExpression, error){
+	"+": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		return floatFunc(args, 1, "+", func(args []float64) (sum float64) {
 			for _, val := range args {
 				sum += val
@@ -69,7 +68,7 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 			return
 		})
 	},
-	"-": func(args []SExpression) (SExpression, error) {
+	"-": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		return floatFunc(args, 2, "-", func(args []float64) (sum float64) {
 			sum = args[0]
 			for _, val := range args[1:] {
@@ -78,7 +77,7 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 			return
 		})
 	},
-	"*": func(args []SExpression) (SExpression, error) {
+	"*": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		return floatFunc(args, 1, "*", func(args []float64) (product float64) {
 			product = 1.0
 			for _, val := range args {
@@ -87,7 +86,7 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 			return
 		})
 	},
-	"/": func(args []SExpression) (SExpression, error) {
+	"/": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		return floatFunc(args, 2, "/", func(args []float64) (numerator float64) {
 			numerator = args[0]
 			for _, val := range args[1:] {
@@ -96,54 +95,54 @@ var builtins map[string]func(args []SExpression) (SExpression, error) = map[stri
 			return
 		})
 	},
-	"list": func(args []SExpression) (SExpression, error) {
-		var out *ConsCell = nil
+	"list": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
+		var out *sexpression.ConsCell = nil
 
 		for i := len(args) - 1; i >= 0; i-- {
-			out = &ConsCell{Car: args[i], Cdr: out}
+			out = &sexpression.ConsCell{Car: args[i], Cdr: out}
 		}
 
 		return out, nil
 	},
-	"car": func(args []SExpression) (SExpression, error) {
+	"car": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		if len(args) != 1 {
 			return nil, errors.New("car expects one argument")
 		}
 
-		cons, ok := args[0].(*ConsCell)
+		cons, ok := args[0].(*sexpression.ConsCell)
 		if !ok {
 			return nil, errors.New("car requires first argument to be a cons cell")
 		}
 
 		return cons.Car, nil
 	},
-	"cdr": func(args []SExpression) (SExpression, error) {
+	"cdr": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		if len(args) != 1 {
 			return nil, errors.New("cdr expects one argument")
 		}
 
-		cons, ok := args[0].(*ConsCell)
+		cons, ok := args[0].(*sexpression.ConsCell)
 		if !ok {
 			return nil, errors.New("cdr requires first argument to be a cons cell")
 		}
 
 		return cons.Cdr, nil
 	},
-	"cons": func(args []SExpression) (SExpression, error) {
+	"cons": func(args []sexpression.SExpression) (sexpression.SExpression, error) {
 		if len(args) != 2 {
 			return nil, errors.New("cons expects 2 arguments")
 		}
 
-		cons, ok := args[1].(*ConsCell)
+		cons, ok := args[1].(*sexpression.ConsCell)
 		if !ok {
 			return nil, errors.New("cons requires second argument to be a cons cell")
 		}
 
-		return &ConsCell{Car: args[0], Cdr: cons}, nil
+		return &sexpression.ConsCell{Car: args[0], Cdr: cons}, nil
 	},
 }
 
-func (cons *ConsCell) Evaluate() (SExpression, error) {
+func (cons *sexpression.ConsCell) Evaluate() (sexpression.SExpression, error) {
 	functionName, err := getFunctionName(cons.Car)
 	if err != nil {
 		return nil, err
@@ -161,7 +160,7 @@ func (cons *ConsCell) Evaluate() (SExpression, error) {
 	return nil, errors.New("No function found called " + functionName)
 }
 
-func Evaluate(sxp SExpression) (SExpression, error) {
+func Evaluate(sxp sexpression.SExpression) (sexpression.SExpression, error) {
 	if sxp == nil {
 		return nil, nil
 	}
